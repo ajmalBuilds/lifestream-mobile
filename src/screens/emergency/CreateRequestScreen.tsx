@@ -6,19 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Platform,
 } from "react-native";
 import TwoStateToggleSwitch from "@/components/common/TwoStateToogleSwitch";
 import Header from "@/components/common/Header";
 import Dropdown from "@/components/common/Dropdown";
-import {
-  Droplets,
-  Heart,
-  Zap,
-  Users,
-  MapPinPlusInside,
-  Minus,
-  Plus,
-} from "lucide-react-native";
+import { Droplets, MapPinPlusInside, Minus, Plus } from "lucide-react-native";
 import { KeyboardAvoidingView } from "react-native";
 
 export default function CreateRequestScreen() {
@@ -62,9 +55,15 @@ export default function CreateRequestScreen() {
         showsVerticalScrollIndicator={true}
         indicatorStyle="black"
       >
-        <KeyboardAvoidingView behavior="padding" keyboardVerticalOffset={100}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <Text style={styles.heading}>Request Type</Text>
-          <TwoStateToggleSwitch selected={selectedType} onToggle={handleToggle} />
+          <TwoStateToggleSwitch
+            selected={selectedType}
+            onToggle={handleToggle}
+          />
 
           {/* Blood Type Dropdown */}
           <View style={{ marginBottom: 10 }}>
@@ -253,7 +252,7 @@ const styles = StyleSheet.create({
     color: "white",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 12,
     display: "flex",
     flexDirection: "row",
     fontWeight: "600",

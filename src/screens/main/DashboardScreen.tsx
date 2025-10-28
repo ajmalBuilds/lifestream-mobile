@@ -26,7 +26,7 @@ type RootStackParamList = {
 
 type MainTabParamList = {
   Dashboard: undefined;
-  Map: undefined;
+  Requests: undefined;
   Profile: undefined;
 };
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, TouchableOpacity } from 'react-native';
 import DashboardScreen from '@/screens/main/DashboardScreen';
-import MapScreen from '@/screens/main/RequestsScreen';
+import RequestsScreen from '@/screens/main/RequestsScreen';
 import ProfileScreen from '@/screens/main/ProfileScreen';
 import { House, MapPin, User, Bell, Menu } from 'lucide-react-native';
 
@@ -74,7 +74,7 @@ const MainNavigator: React.FC = () => {
       />
       <Tab.Screen 
         name="Requests" 
-        component={MapScreen}
+        component={RequestsScreen}
         options={{
           title: 'Requests',
           tabBarIcon: ({ color, size }) => (

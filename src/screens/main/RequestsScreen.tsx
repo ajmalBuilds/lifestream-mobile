@@ -4,20 +4,20 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 type MainTabParamList = {
   Dashboard: undefined;
-  Map: undefined;
+  Requests: undefined;
   Profile: undefined;
 };
 
-type MapScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Map'>;
+type RequestsScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Requests'>;
 
 interface Props {
-  navigation: MapScreenNavigationProp;
+  navigation: RequestsScreenNavigationProp;
 }
 
 const RequestsScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Emergency Map</Text>
+      <Text style={styles.title}>Emergency Requests</Text>
       <Text style={styles.subtitle}>Live view of nearby emergencies</Text>
       
       <View style={styles.mapPlaceholder}>

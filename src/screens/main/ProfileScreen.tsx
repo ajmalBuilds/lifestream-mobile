@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useAuthStore } from '@/store/authStore';
 
 type MainTabParamList = {
   Dashboard: undefined;
-  Map: undefined;
+  Requests: undefined;
   Profile: undefined;
 };
 
@@ -15,15 +16,27 @@ interface Props {
 }
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
+  const { user, logout } = useAuthStore();
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: logout },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Your Profile</Text>
       
       <View style={styles.profileCard}>
-        <Text style={styles.name}>Mohammed Ajmal Khan</Text>
-        <Text style={styles.detail}>Blood Type: O+</Text>
-        <Text style={styles.detail}>Role: Donor</Text>
-        <Text style={styles.detail}>Lives Saved: 3</Text>
+        <Text style={styles.name}>{user ? user.name : ""}</Text>
+        <Text style={styles.detailLabel}>Email: <Text style={styles.detail}>{user?.email}</Text></Text>
+        <Text style={styles.detailLabel}>Blood Type: <Text style={styles.detail}>{user?.bloodType || 'Not specified'}</Text></Text>
+        <Text style={styles.detailLabel}>User Type: <Text style={styles.detail}>{user?.userType}</Text></Text>
       </View>
 
       <TouchableOpacity 
@@ -34,10 +47,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       </TouchableOpacity>
 
       <TouchableOpacity 
-        style={[styles.button, styles.secondaryButton]}
-        onPress={() => navigation.navigate('Dashboard')}
+        style={[styles.button, styles.logoutButton]}
+        onPress={handleLogout}
       >
-        <Text style={styles.secondaryButtonText}>Back to Dashboard</Text>
+        <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
     </View>
   );
@@ -73,10 +86,16 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     marginBottom: 10,
   },
-  detail: {
+  detailLabel: {
     fontSize: 16,
     color: '#6b7280',
     marginBottom: 5,
+  },
+  detail: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 5,
+    fontWeight: '500',
   },
   button: {
     backgroundColor: '#dc2626',
@@ -90,10 +109,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  secondaryButton: {
-    backgroundColor: '#1e40af',
+  logoutButton: {
+    backgroundColor: '#6b7280',
   },
-  secondaryButtonText: {
+  logoutButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
