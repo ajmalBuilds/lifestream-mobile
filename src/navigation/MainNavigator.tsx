@@ -24,7 +24,7 @@ const CustomHeader = ({ title, onNotificationPress, onMenuPress }: {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 40, // Add some top padding for status bar
+    paddingTop: 40,
     height: 100,
     backgroundColor: '#ffffff',
   }}>

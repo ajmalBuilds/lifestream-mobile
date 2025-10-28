@@ -31,6 +31,7 @@ const RequestsScreen: React.FC<Props> = ({ navigation }) => {
       >
         <Text style={styles.buttonText}>Back to Dashboard</Text>
       </TouchableOpacity>
+      
     </View>
   );
 };

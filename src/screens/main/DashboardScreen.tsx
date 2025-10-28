@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { StackNavigationProp } from '@react-navigation/stack';
 import {
   History,
   MessageSquare,
@@ -16,6 +17,12 @@ import {
 } from "lucide-react-native";
 import ActiveRequestsCard from "@/components/common/ActiveRequestsCard";
 import RecentActivityCard from "@/components/common/RecentActivityCard";
+import { useRoute } from "@react-navigation/native";
+
+type RootStackParamList = {
+  Main: undefined;
+  CreateRequest: undefined;
+};
 
 type MainTabParamList = {
   Dashboard: undefined;
@@ -23,9 +30,9 @@ type MainTabParamList = {
   Profile: undefined;
 };
 
-type DashboardScreenNavigationProp = BottomTabNavigationProp<
-  MainTabParamList,
-  "Dashboard"
+type DashboardScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'Main'
 >;
 
 interface Props {
@@ -34,10 +41,34 @@ interface Props {
 
 const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const quickActions = ["search", "history", "messages", "profile"];
+  const router = useRoute();
+
+  // const handleQuickAction = (action: string) => {
+  //   let link: string;
+  //   switch (action) {
+  //     case "search":
+  //       link = 'Map';
+  //       break;
+  //     case "history":
+  //       link = 'Dashboard';
+  //       break;
+  //     case "messages":
+  //       link = 'Dashboard';
+  //       break;
+  //     case "profile":
+  //       link = 'Profile';
+  //       break;
+  //     default:
+  //       link = '';
+  //   }
+  //   if (link) {
+  //     navigation.navigate(link as keyof MainTabParamList);
+  //   }
+  // }
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.container}>
-        <TouchableOpacity activeOpacity={0.6} style={styles.btn1}>
+        <TouchableOpacity activeOpacity={0.6} style={styles.btn1} onPress={() => navigation.navigate('CreateRequest')}>
           <Plus color={"white"} />
           <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
             Create New Request
@@ -79,22 +110,27 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             hospital="City Hospital"
           />
         </ScrollView>
-        //Quick Action Buttons
+
         <View style={{ marginBottom: 20, paddingHorizontal: 5 , flexDirection: "row", display: "flex", justifyContent: "space-between" }}>
           {quickActions.map((action) => {
             let icon;
+            let link: string;
             switch (action) {
               case "search":
                 icon = <Search color="#023E8a" />;
+                link = 'Map';
                 break;
               case "history":
                 icon = <History color="#023E8a" />;
+                link = 'Dashboard';
                 break;
               case "messages":
                 icon = <MessageSquare color="#023E8a" />;
+                link = 'Dashboard';
                 break;
               case "profile":
                 icon = <User2 color="#023E8a" />;
+                link = 'Profile';
                 break;
               default:
                 icon = null;
@@ -104,7 +140,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               <TouchableOpacity
                 key={action}
                 style={styles.quickActionButton}
-                onPress={() => console.log(`${action} button pressed`)}
+                onPress={() => {}}
               >
                 {icon}
               </TouchableOpacity>
