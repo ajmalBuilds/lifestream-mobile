@@ -50,6 +50,14 @@ export const authAPI = {
     api.post('/auth/refresh', { token }),
 };
 
+export const locationAPI = {
+    updateLocation: (location: { latitude: number; longitude: number; address?:string; timestamp: number} ) => 
+    api.post('users/location', location),
+
+  getLocation: (userId: string) =>
+    api.get(`users/${userId}/location`),
+}
+
 export interface RegisterData {
   name: string;
   email: string;

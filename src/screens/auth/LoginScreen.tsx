@@ -26,7 +26,6 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const { login, isLoading, error, clearError } = useAuthStore();
 
-  // Clear errors when component unmounts or when user starts typing
   useEffect(() => {
     return () => clearError();
   }, []);
