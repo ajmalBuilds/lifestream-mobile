@@ -5,10 +5,12 @@ import AuthNavigator from "./AuthNavigator";
 import MainNavigator from "./MainNavigator";
 import { useAuthStore } from "../store/authStore";
 import CreateRequest from "@/screens/emergency/CreateRequestScreen";
+import EditProfile from "@/screens/profile/EditProfileScreen";
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   CreateRequest: undefined;
+  EditProfile: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -34,6 +36,7 @@ const AppNavigator: React.FC = () => {
         <>
           <Stack.Screen name="Main" component={MainNavigator} />
           <Stack.Screen name="CreateRequest" component={CreateRequest} />
+          <Stack.Screen name="EditProfile" component={EditProfile} />
         </>
       ) : (
         <Stack.Screen name="Auth" component={AuthNavigator} />

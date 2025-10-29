@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+// ActiveRequestsCard.tsx
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 interface ActiveRequestsCardProps {
-  urgency: 'critical' | 'high' | 'medium' | 'low';
+  urgency: "critical" | "high" | "medium" | "low";
   createdAt: string;
   bloodType: string;
   unitsNeeded: number;
@@ -10,47 +11,73 @@ interface ActiveRequestsCardProps {
   onPress?: () => void;
 }
 
-const ActiveRequestsCard: React.FC<ActiveRequestsCardProps> = ({ 
-  urgency, 
-  createdAt, 
-  bloodType, 
-  unitsNeeded, 
+const ActiveRequestsCard: React.FC<ActiveRequestsCardProps> = ({
+  urgency,
+  createdAt,
+  bloodType,
+  unitsNeeded,
   hospital,
-  onPress 
+  onPress,
 }) => {
-  const getUrgencyColor = () => {
-    switch (urgency) {
-      case 'critical': return '#dc2626';
-      case 'high': return '#FF6E00';
-      case 'medium': return '#ffe135';
-      case 'low': return '#65a30d';
-      default: return '#6b7280';
-    }
+  const getUrgencyColor = (): string => {
+    const colors = {
+      critical: "#dc2626",
+      high: "#FF6E00",
+      medium: "#F59E0B",
+      low: "#65a30d",
+    };
+    return colors[urgency];
+  };
+
+  const getUrgencyLabel = (): string => {
+    const labels = {
+      critical: "CRITICAL",
+      high: "HIGH",
+      medium: "MEDIUM",
+      low: "LOW",
+    };
+    return labels[urgency];
   };
 
   return (
-    <TouchableOpacity 
-      activeOpacity={0.7} 
+    <TouchableOpacity
+      activeOpacity={0.7}
       style={[styles.container, { borderLeftColor: getUrgencyColor() }]}
       onPress={onPress}
     >
       <View style={styles.header}>
-        <Text style={[styles.urgencyText, { color: getUrgencyColor() }]}>
-          {urgency.toUpperCase()}
-        </Text>
+        <View
+          style={[
+            styles.urgencyBadge,
+            { backgroundColor: `${getUrgencyColor()}15` },
+          ]}
+        >
+          <Text style={[styles.urgencyText, { color: getUrgencyColor() }]}>
+            {getUrgencyLabel()}
+          </Text>
+        </View>
         <Text style={styles.dateText}>{createdAt}</Text>
       </View>
-      
+
+      <View style={styles.divider} />
+
       <View style={styles.details}>
-        <Text style={styles.detailText}>
-          Blood Type: <Text style={styles.detailValue}>{bloodType}</Text>
-        </Text>
-        <Text style={styles.detailText}>
-          Units Needed: <Text style={styles.detailValue}>{unitsNeeded}</Text>
-        </Text>
-        <Text style={styles.detailText}>
-          Hospital: <Text style={styles.detailValue}>{hospital}</Text>
-        </Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Blood Type</Text>
+          <Text style={[styles.detailValue, styles.bloodTypeValue]}>
+            {bloodType}
+          </Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Units Needed</Text>
+          <Text style={styles.detailValue}>{unitsNeeded}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Hospital</Text>
+          <Text style={[styles.detailValue, styles.hospitalValue]} numberOfLines={1}>
+            {hospital}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -59,21 +86,21 @@ const ActiveRequestsCard: React.FC<ActiveRequestsCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    height: 140,
-    width: 250,
+    paddingVertical: 14,
+    width: 260,
+    minHeight: 160,
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
     elevation: 3,
-    borderLeftWidth: 3,
-    marginRight: 10,
+    borderLeftWidth: 4,
+    marginRight: 12,
   },
   header: {
     flexDirection: "row",
@@ -81,26 +108,51 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  urgencyBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
   urgencyText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    textTransform: "uppercase",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   dateText: {
-    fontSize: 14,
-    color: "#6b7280",
+    fontSize: 12,
+    color: "#9ca3af",
+    fontWeight: "500",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#f3f4f6",
+    marginBottom: 12,
   },
   details: {
-    // Removed 'gap' for better compatibility
+    gap: 10,
   },
-  detailText: {
-    fontSize: 16,
-    color: "#374151",
-    marginBottom: 4,
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: "#6b7280",
+    fontWeight: "500",
   },
   detailValue: {
+    fontSize: 15,
     fontWeight: "600",
     color: "#1f2937",
+  },
+  bloodTypeValue: {
+    color: "#dc2626",
+    fontSize: 16,
+  },
+  hospitalValue: {
+    maxWidth: 140,
+    textAlign: "right",
   },
 });
 

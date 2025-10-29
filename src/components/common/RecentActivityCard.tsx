@@ -85,14 +85,14 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 10,
-    paddingVertical: 12,
+    paddingVertical: 10,
     height: 80,
     borderRadius: 16,
     backgroundColor: "#fff",
   },
   title: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 600,
     color: "#000",
   },
   iconBadge: {

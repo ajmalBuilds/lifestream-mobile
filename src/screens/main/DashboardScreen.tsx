@@ -1,13 +1,15 @@
-import React from "react";
+// DashboardScreen.tsx
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { StackNavigationProp } from '@react-navigation/stack';
+import { StackNavigationProp } from "@react-navigation/stack";
 import {
   History,
   MessageSquare,
@@ -17,165 +19,290 @@ import {
 } from "lucide-react-native";
 import ActiveRequestsCard from "@/components/common/ActiveRequestsCard";
 import RecentActivityCard from "@/components/common/RecentActivityCard";
-import { useRoute } from "@react-navigation/native";
 
 type RootStackParamList = {
   Main: undefined;
   CreateRequest: undefined;
+  RequestDetails: { requestId: string };
+  ActivityDetails: { activityId: string };
 };
 
 type MainTabParamList = {
   Dashboard: undefined;
   Requests: undefined;
   Profile: undefined;
+  Map: undefined;
+  Messages: undefined;
 };
 
 type DashboardScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
-  'Main'
+  "Main"
 >;
 
 interface Props {
   navigation: DashboardScreenNavigationProp;
 }
 
+interface ActiveRequest {
+  id: string;
+  urgency: "critical" | "high" | "medium" | "low";
+  createdAt: string;
+  bloodType: string;
+  unitsNeeded: number;
+  hospital: string;
+}
+
+interface RecentActivity {
+  id: string;
+  createdAt: string;
+  type: "success" | "newDonorMatched" | "scheduled";
+  message: string;
+}
+
+interface QuickAction {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  route?: keyof MainTabParamList;
+}
+
 const DashboardScreen: React.FC<Props> = ({ navigation }) => {
-  const quickActions = ["search", "history", "messages", "profile"];
-  const router = useRoute();
+  const [activeRequests, setActiveRequests] = useState<ActiveRequest[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // const handleQuickAction = (action: string) => {
-  //   let link: string;
-  //   switch (action) {
-  //     case "search":
-  //       link = 'Map';
-  //       break;
-  //     case "history":
-  //       link = 'Dashboard';
-  //       break;
-  //     case "messages":
-  //       link = 'Dashboard';
-  //       break;
-  //     case "profile":
-  //       link = 'Profile';
-  //       break;
-  //     default:
-  //       link = '';
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Replace with actual API calls
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock data - replace with actual API response
+      const mockActiveRequests: ActiveRequest[] = [
+        {
+          id: "1",
+          urgency: "critical",
+          createdAt: "2 hrs ago",
+          bloodType: "A+",
+          unitsNeeded: 4,
+          hospital: "City Hospital",
+        },
+        {
+          id: "2",
+          urgency: "high",
+          createdAt: "5 hrs ago",
+          bloodType: "O-",
+          unitsNeeded: 2,
+          hospital: "General Hospital",
+        },
+        {
+          id: "3",
+          urgency: "medium",
+          createdAt: "1 day ago",
+          bloodType: "B+",
+          unitsNeeded: 3,
+          hospital: "Community Clinic",
+        },
+        {
+          id: "4",
+          urgency: "low",
+          createdAt: "2 days ago",
+          bloodType: "AB+",
+          unitsNeeded: 1,
+          hospital: "Health Center",
+        },
+      ];
+
+      const mockRecentActivities: RecentActivity[] = [
+        {
+          id: "997",
+          createdAt: "2 min ago",
+          type: "success",
+          message: "Request for O+ fulfilled",
+        },
+        {
+          id: "998",
+          createdAt: "1 day ago",
+          type: "newDonorMatched",
+          message: "New donor matched for Request #5821",
+        },
+        {
+          id: "999",
+          createdAt: "2 days ago",
+          type: "scheduled",
+          message: "Donation scheduled with donor",
+        },
+      ];
+
+      setActiveRequests(mockActiveRequests);
+      setRecentActivities(mockRecentActivities);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      Alert.alert("Error", "Failed to load dashboard data. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestPress = (requestId: string) => {
+    // Navigate to request details
+    navigation.navigate("RequestDetails", { requestId });
+  };
+
+  const handleActivityPress = (activityId: string) => {
+    // Navigate to activity details
+    navigation.navigate("ActivityDetails", { activityId });
+  };
+
+  const quickActions: QuickAction[] = [
+    {
+      id: "search",
+      label: "Search",
+      icon: <Search color="#023E8a" size={24} />,
+      route: "Map",
+    },
+    {
+      id: "history",
+      label: "History",
+      icon: <History color="#023E8a" size={24} />,
+      route: "Requests",
+    },
+    {
+      id: "messages",
+      label: "Messages",
+      icon: <MessageSquare color="#023E8a" size={24} />,
+      route: "Messages",
+    },
+    {
+      id: "profile",
+      label: "Profile",
+      icon: <User2 color="#023E8a" size={24} />,
+      route: "Profile",
+    },
+  ];
+
+  // const handleQuickAction = (action: QuickAction) => {
+  //   if (action.route) {
+  //     // Check if the route exists in navigation state
+  //     const state = navigation.getState();
+  //     const routeExists = state.routes.some((r) => r.name === action.route);
+
+  //     if (routeExists || action.route === "Map" || action.route === "Messages") {
+  //       // For tab navigation, you might need to use a different approach
+  //       // This depends on your navigation structure
+  //       Alert.alert("Navigation", `Navigating to ${action.label}`);
+  //       // navigation.navigate(action.route); // Uncomment when routes are set up
+  //     } else {
+  //       Alert.alert("Coming Soon", `${action.label} feature is under development`);
+  //     }
   //   }
-  //   if (link) {
-  //     navigation.navigate(link as keyof MainTabParamList);
-  //   }
-  // }
+  // };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2962ff" />
+        <Text style={styles.loadingText}>Loading dashboard...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <ScrollView 
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.container}>
-        <TouchableOpacity activeOpacity={0.6} style={styles.btn1} onPress={() => navigation.navigate('CreateRequest')}>
-          <Plus color={"white"} />
-          <Text style={{ color: "white", fontWeight: "700", fontSize: 16 }}>
-            Create New Request
-          </Text>
+        {/* Create New Request Button */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={styles.createButton}
+          onPress={() => navigation.navigate("CreateRequest")}
+        >
+          <Plus color="white" size={20} />
+          <Text style={styles.createButtonText}>Create New Request</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Active Requests</Text>
-        <ScrollView
-          horizontal={true}
-          style={{ marginBottom: 20, display: "flex", flexDirection: "row", paddingVertical: 5 }}
 
-          showsHorizontalScrollIndicator={false}
-        >
-          <ActiveRequestsCard
-            urgency="critical"
-            createdAt="2 hrs ago"
-            bloodType="A+"
-            unitsNeeded={4}
-            hospital="City Hospital"
-          />
-          <ActiveRequestsCard
-            urgency="high"
-            createdAt="2 hrs ago"
-            bloodType="A+"
-            unitsNeeded={4}
-            hospital="City Hospital"
-          />
-          <ActiveRequestsCard
-            urgency="medium"
-            createdAt="2 hrs ago"
-            bloodType="A+"
-            unitsNeeded={4}
-            hospital="City Hospital"
-          />
-          <ActiveRequestsCard
-            urgency="low"
-            createdAt="2 hrs ago"
-            bloodType="A+"
-            unitsNeeded={4}
-            hospital="City Hospital"
-          />
-        </ScrollView>
+        {/* Active Requests Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Active Requests</Text>
+            <Text style={styles.sectionCount}>{activeRequests.length}</Text>
+          </View>
 
-        <View style={{ marginBottom: 20, paddingHorizontal: 5 , flexDirection: "row", display: "flex", justifyContent: "space-between" }}>
-          {quickActions.map((action) => {
-            let icon;
-            let link: string;
-            switch (action) {
-              case "search":
-                icon = <Search color="#023E8a" />;
-                link = 'Map';
-                break;
-              case "history":
-                icon = <History color="#023E8a" />;
-                link = 'Dashboard';
-                break;
-              case "messages":
-                icon = <MessageSquare color="#023E8a" />;
-                link = 'Dashboard';
-                break;
-              case "profile":
-                icon = <User2 color="#023E8a" />;
-                link = 'Profile';
-                break;
-              default:
-                icon = null;
-            }
-            return (
-              <View key={action} style={{ display: "flex", flexDirection: 'column', justifyContent: 'center', alignItems: "center"}}>
-              <TouchableOpacity
-                key={action}
-                style={styles.quickActionButton}
-                onPress={() => {}}
-              >
-                {icon}
-              </TouchableOpacity>
-                <Text style={styles.quickActionText}>{action}</Text>
-              </View>
-            );
-          })}
+          {activeRequests.length > 0 ? (
+            <ScrollView
+              style={{ paddingVertical: 4}}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContent}
+            >
+              {activeRequests.map((request) => (
+                <ActiveRequestsCard
+                  key={request.id}
+                  urgency={request.urgency}
+                  createdAt={request.createdAt}
+                  bloodType={request.bloodType}
+                  unitsNeeded={request.unitsNeeded}
+                  hospital={request.hospital}
+                  // onPress={() => handleRequestPress(request.id)}
+                />
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No active requests</Text>
+            </View>
+          )}
         </View>
-        <Text style={styles.title}>Recent Activity</Text>
-        <View
-          style={{
-            marginBottom: 20,
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
-        >
-          <RecentActivityCard
-            createdAt="2 min ago"
-            id="997"
-            type="success"
-            message="Request for O+ fulfilled"
-          />
-          <RecentActivityCard
-            createdAt="1 day ago"
-            id="998"
-            type="newDonorMatched"
-            message="New donor matched for Request #5821"
-          />
-          <RecentActivityCard
-            createdAt="2 days ago"
-            id="999"
-            type="scheduled"
-            message="Donation scheduled with donor"
-          />
+
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          {quickActions.map((action) => (
+            <TouchableOpacity
+              key={action.id}
+              style={styles.quickActionWrapper}
+              // onPress={() => handleQuickAction(action)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.quickActionButton}>{action.icon}</View>
+              <Text style={styles.quickActionText}>{action.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Recent Activity Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+          </View>
+
+          {recentActivities.length > 0 ? (
+            <View style={styles.activityList}>
+              {recentActivities.map((activity) => (
+                <RecentActivityCard
+                  key={activity.id}
+                  id={activity.id}
+                  createdAt={activity.createdAt}
+                  type={activity.type}
+                  message={activity.message}
+                  // onPress={() => handleActivityPress(activity.id)}
+                />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No recent activity</Text>
+            </View>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -183,88 +310,118 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f8fafc",
+    paddingBottom: 40,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 500,
-    color: "#000",
-    marginBottom: 20,
-    textAlign: "left",
-  },
-  btn1: {
-    marginBottom: 20,
-    backgroundColor: "#2962ff",
-    color: "white",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    display: "flex",
-    flexDirection: "row",
-    gap: 5,
-    fontWeight: "600",
+  loadingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#f8fafc",
   },
-  card: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
     color: "#6b7280",
-    marginBottom: 5,
   },
-  cardValue: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#dc2626",
-  },
-  emergencyButton: {
-    backgroundColor: "#dc2626",
-    padding: 20,
-    borderRadius: 10,
+  createButton: {
+    backgroundColor: "#2962ff",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 15,
+    marginBottom: 24,
+    shadowColor: "#2962ff",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  emergencyButtonText: {
+  createButtonText: {
     color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "700",
+    marginLeft: 8,
+  },
+  section: {
+    marginBottom: 28,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  sectionCount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#6b7280",
+    backgroundColor: "#e5e7eb",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  horizontalScrollContent: {
+    paddingRight: 10,
+  },
+  emptyState: {
+    backgroundColor: "white",
+    padding: 40,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#9ca3af",
+    fontWeight: "500",
+  },
+  quickActionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 28,
+  },
+  quickActionWrapper: {
+    alignItems: "center",
+    flex: 1,
   },
   quickActionButton: {
     backgroundColor: "#CAF0F8",
-    width: 50,
-    height: 50,
-    borderRadius: '100%',
-    display: "flex",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 8,
+    shadowColor: "#023E8a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   quickActionText: {
-    color: '#000',
+    fontSize: 12,
+    color: "#374151",
+    fontWeight: "500",
+    textTransform: "capitalize",
   },
-  secondaryButton: {
-    backgroundColor: "#1e40af",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  secondaryButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
+  activityList: {
+    gap: 12,
   },
 });
 
