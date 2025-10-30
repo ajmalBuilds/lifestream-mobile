@@ -3,8 +3,9 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
-export default function Header({ title }: { 
+export default function Header({ title, backgroundColor }: { 
     title: string; 
+    backgroundColor?: string;
 }) { 
   const navigation = useNavigation();
 
@@ -20,9 +21,9 @@ export default function Header({ title }: {
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingTop: 40,
+      paddingTop: 60,
       height: 100,
-      backgroundColor: '#ffffff',
+      backgroundColor: backgroundColor || '#ffffff',
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <TouchableOpacity onPress={handleBackPress} style={{ padding: 8 }}>

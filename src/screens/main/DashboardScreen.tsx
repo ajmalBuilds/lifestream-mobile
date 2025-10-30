@@ -16,15 +16,32 @@ import {
   Plus,
   Search,
   User2,
+  Bell,
 } from "lucide-react-native";
 import ActiveRequestsCard from "@/components/common/ActiveRequestsCard";
 import RecentActivityCard from "@/components/common/RecentActivityCard";
+import { requestAPI } from "@/services/api";
+import { useAuthStore } from "@/store/authStore";
+import { useLocationStore } from "@/store/locationStore";
+import { useActivityStore, Activity } from "@/store/activityStore";
+import { activityService } from "@/services/ActivityService";
 
 type RootStackParamList = {
   Main: undefined;
   CreateRequest: undefined;
-  RequestDetails: { requestId: string };
-  ActivityDetails: { activityId: string };
+  RequestDetails: { 
+    requestId: string; 
+    urgency?: string; 
+    bloodType?: string; 
+    patientName?: string; 
+    unitsNeeded?: number;
+    createdAt?: string;
+    hospital?: string;
+    latitude: number;
+    longitude: number;
+  };
+  ActivityDetails: { activity: Activity };
+  ActivityList: undefined;
 };
 
 type MainTabParamList = {
@@ -47,17 +64,13 @@ interface Props {
 interface ActiveRequest {
   id: string;
   urgency: "critical" | "high" | "medium" | "low";
-  createdAt: string;
-  bloodType: string;
-  unitsNeeded: number;
+  patient_name: string;
+  created_at: string;
+  blood_type: string;
+  units_needed: number;
   hospital: string;
-}
-
-interface RecentActivity {
-  id: string;
-  createdAt: string;
-  type: "success" | "newDonorMatched" | "scheduled";
-  message: string;
+  latitude: number;
+  longitude: number;
 }
 
 interface QuickAction {
@@ -69,80 +82,46 @@ interface QuickAction {
 
 const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const [activeRequests, setActiveRequests] = useState<ActiveRequest[]>([]);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuthStore();
+  const { currentLocation } = useLocationStore();
+  const { getRecentActivities, unreadCount, markAsRead } = useActivityStore();
+
+  // Get recent activities from store - this returns Activity[] type
+  const recentActivities = getRecentActivities(5);  
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Add sample activities if none exist
+    if (recentActivities.length === 0) {
+      addSampleActivities();
+    }
   }, []);
 
   const fetchDashboardData = async () => {
+    // Check location first
+    if (!currentLocation?.latitude || !currentLocation?.longitude) {
+      Alert.alert(
+        "Location Required", 
+        "Please enable location services to see nearby requests."
+      );
+      setActiveRequests([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
-      // TODO: Replace with actual API calls
-      // Simulating API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock data - replace with actual API response
-      const mockActiveRequests: ActiveRequest[] = [
-        {
-          id: "1",
-          urgency: "critical",
-          createdAt: "2 hrs ago",
-          bloodType: "A+",
-          unitsNeeded: 4,
-          hospital: "City Hospital",
-        },
-        {
-          id: "2",
-          urgency: "high",
-          createdAt: "5 hrs ago",
-          bloodType: "O-",
-          unitsNeeded: 2,
-          hospital: "General Hospital",
-        },
-        {
-          id: "3",
-          urgency: "medium",
-          createdAt: "1 day ago",
-          bloodType: "B+",
-          unitsNeeded: 3,
-          hospital: "Community Clinic",
-        },
-        {
-          id: "4",
-          urgency: "low",
-          createdAt: "2 days ago",
-          bloodType: "AB+",
-          unitsNeeded: 1,
-          hospital: "Health Center",
-        },
-      ];
+      const response = await requestAPI.getNearbyRequests(
+        currentLocation.latitude, 
+        currentLocation.longitude, 
+        50, 
+        user?.bloodType
+      );
 
-      const mockRecentActivities: RecentActivity[] = [
-        {
-          id: "997",
-          createdAt: "2 min ago",
-          type: "success",
-          message: "Request for O+ fulfilled",
-        },
-        {
-          id: "998",
-          createdAt: "1 day ago",
-          type: "newDonorMatched",
-          message: "New donor matched for Request #5821",
-        },
-        {
-          id: "999",
-          createdAt: "2 days ago",
-          type: "scheduled",
-          message: "Donation scheduled with donor",
-        },
-      ];
-
-      setActiveRequests(mockActiveRequests);
-      setRecentActivities(mockRecentActivities);
+      const NearbyRequest = [...response.data.data.requests];
+      setActiveRequests(NearbyRequest);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       Alert.alert("Error", "Failed to load dashboard data. Please try again.");
@@ -151,14 +130,53 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const handleRequestPress = (requestId: string) => {
-    // Navigate to request details
-    navigation.navigate("RequestDetails", { requestId });
+  // Add sample activities for demonstration
+  const addSampleActivities = () => {
+    setTimeout(() => {
+      activityService.requestCreated({
+        requestId: "123",
+        bloodType: user?.bloodType || "O+",
+        units: 2,
+        hospital: "City Hospital"
+      });
+
+      activityService.donorMatched({
+        requestId: "123",
+        bloodType: user?.bloodType || "O+",
+        donorName: "John Smith",
+        distance: 3.2
+      });
+
+      activityService.messageReceived({
+        fromUser: "John Smith",
+        message: "I can donate tomorrow at 2 PM",
+        requestId: "123"
+      });
+    }, 1000);
   };
 
-  const handleActivityPress = (activityId: string) => {
-    // Navigate to activity details
-    navigation.navigate("ActivityDetails", { activityId });
+  const handleRequestPress = (request: any) => {
+    navigation.navigate("RequestDetails", { 
+      requestId: request.id,
+      urgency: request.urgency,
+      bloodType: request.blood_type,
+      unitsNeeded: request.units_needed,
+      patientName: request.requester_name,
+      createdAt: request.created_at,
+      hospital: request.hospital,
+      latitude: request.latitude,
+      longitude: request.longitude,
+    });
+  };
+
+  const handleActivityPress = (activity: Activity) => {
+    // Mark as read when pressed
+    markAsRead(activity.id);
+    navigation.navigate("ActivityDetails", { activity });
+  };
+
+  const handleViewAllActivities = () => {
+    navigation.navigate("ActivityList");
   };
 
   const quickActions: QuickAction[] = [
@@ -187,23 +205,6 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       route: "Profile",
     },
   ];
-
-  // const handleQuickAction = (action: QuickAction) => {
-  //   if (action.route) {
-  //     // Check if the route exists in navigation state
-  //     const state = navigation.getState();
-  //     const routeExists = state.routes.some((r) => r.name === action.route);
-
-  //     if (routeExists || action.route === "Map" || action.route === "Messages") {
-  //       // For tab navigation, you might need to use a different approach
-  //       // This depends on your navigation structure
-  //       Alert.alert("Navigation", `Navigating to ${action.label}`);
-  //       // navigation.navigate(action.route); // Uncomment when routes are set up
-  //     } else {
-  //       Alert.alert("Coming Soon", `${action.label} feature is under development`);
-  //     }
-  //   }
-  // };
 
   if (isLoading) {
     return (
@@ -249,17 +250,20 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                 <ActiveRequestsCard
                   key={request.id}
                   urgency={request.urgency}
-                  createdAt={request.createdAt}
-                  bloodType={request.bloodType}
-                  unitsNeeded={request.unitsNeeded}
+                  createdAt={request.created_at}
+                  bloodType={request.blood_type}
+                  unitsNeeded={request.units_needed}
                   hospital={request.hospital}
-                  // onPress={() => handleRequestPress(request.id)}
+                  onPress={() => handleRequestPress(request)}
                 />
               ))}
             </ScrollView>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No active requests</Text>
+              <Text style={styles.emptyStateText}>No active requests nearby</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Enable location to see requests in your area
+              </Text>
             </View>
           )}
         </View>
@@ -270,7 +274,6 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             <TouchableOpacity
               key={action.id}
               style={styles.quickActionWrapper}
-              // onPress={() => handleQuickAction(action)}
               activeOpacity={0.7}
             >
               <View style={styles.quickActionButton}>{action.icon}</View>
@@ -282,7 +285,19 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         {/* Recent Activity Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <View style={styles.activityHeader}>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              {unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
+                </View>
+              )}
+            </View>
+            {recentActivities.length > 0 && (
+              <TouchableOpacity onPress={handleViewAllActivities}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {recentActivities.length > 0 ? (
@@ -290,17 +305,18 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               {recentActivities.map((activity) => (
                 <RecentActivityCard
                   key={activity.id}
-                  id={activity.id}
-                  createdAt={activity.createdAt}
-                  type={activity.type}
-                  message={activity.message}
-                  // onPress={() => handleActivityPress(activity.id)}
+                  activity={activity}
+                  onPress={handleActivityPress}
                 />
               ))}
             </View>
           ) : (
             <View style={styles.emptyState}>
+              <Bell size={32} color="#9ca3af" />
               <Text style={styles.emptyStateText}>No recent activity</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Your activities will appear here
+              </Text>
             </View>
           )}
         </View>
@@ -363,6 +379,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  activityHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "600",
@@ -377,6 +398,24 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
+  unreadBadge: {
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: "center",
+  },
+  unreadBadgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: "#2962ff",
+    fontWeight: "600",
+  },
   horizontalScrollContent: {
     paddingRight: 10,
   },
@@ -385,11 +424,17 @@ const styles = StyleSheet.create({
     padding: 40,
     borderRadius: 12,
     alignItems: "center",
+    gap: 8,
   },
   emptyStateText: {
     fontSize: 16,
     color: "#9ca3af",
     fontWeight: "500",
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: "#d1d5db",
+    textAlign: "center",
   },
   quickActionsContainer: {
     flexDirection: "row",

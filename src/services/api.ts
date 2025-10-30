@@ -58,6 +58,44 @@ export const locationAPI = {
     api.get(`users/${userId}/location`),
 }
 
+export const requestAPI = {
+  createRequest: (requestData: any) =>
+    api.post('/requests/create', requestData),
+
+  getRequests: () =>
+    api.get('/requests/active'),
+
+  getRequestById: (id: string) =>
+    api.get(`/requests/${id}`),
+
+  getNearbyRequests: (latitude: number, longitude: number, radius: number = 10, bloodType?: string) => {
+    const params: any = {
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+      radius: radius.toString()
+    };
+    
+    if (bloodType) {
+      params.bloodType = bloodType;
+    }
+    
+    return api.get(`/requests/nearby`, { params });
+  },
+  updateRequest: (id: string, updateData: any) =>
+    api.put(`/requests/${id}`, updateData),
+
+  deleteRequest: (id: string) =>
+    api.delete(`/requests/${id}`),
+};
+
+export const mapAPI = {
+  getRequestsWithCoordinates: (latitude: number, longitude: number, radius: number = 50) =>
+    api.get(`/requests/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`),
+
+  getRequestDetails: (id: number) =>
+    api.get(`/requests/${id}`),
+};
+
 export interface RegisterData {
   name: string;
   email: string;

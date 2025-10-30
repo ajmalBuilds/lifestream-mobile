@@ -1,82 +1,90 @@
-import { CircleCheck, Timer, UserPlus, UserPlus2 } from "lucide-react-native";
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Activity } from '@/store/activityStore';
+import { formatRelativeTime } from '@/utils/timeUtils';
+import { 
+  Bell, 
+  CheckCircle, 
+  MapPin, 
+  MessageCircle, 
+  User,
+  Calendar,
+  Droplets,
+  Shield
+} from 'lucide-react-native';
 
 interface RecentActivityCardProps {
-  id: string;
-  createdAt: string;
-  type: "success" | "newDonorMatched" | "scheduled";
-  message: string;
-  onPress?: () => void;
+  activity: Activity;
+  onPress?: (activity: Activity) => void;
 }
 
-const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
-  id,
-  createdAt,
-  type,
-  message,
-  onPress,
-}) => {
-  const getBackgroundColor = () => {
+const RecentActivityCard: React.FC<RecentActivityCardProps> = ({ activity, onPress }) => {
+  const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
-      case "success":
-        return "#CCE7C9";
-      case "newDonorMatched":
-        return "#CAF0F8";
-      case "scheduled":
-        return "#CAF0F8";
+      case 'request_created':
+        return <Bell size={20} color="#2962ff" />;
+      case 'request_fulfilled':
+        return <CheckCircle size={20} color="#059669" />;
+      case 'donor_matched':
+        return <User size={20} color="#d97706" />;
+      case 'donation_scheduled':
+        return <Calendar size={20} color="#7c3aed" />;
+      case 'donation_completed':
+        return <Droplets size={20} color="#dc2626" />;
+      case 'message_received':
+        return <MessageCircle size={20} color="#2563eb" />;
+      case 'profile_updated':
+        return <Shield size={20} color="#6b7280" />;
+      case 'location_shared':
+        return <MapPin size={20} color="#ea580c" />;
       default:
-        return "#90ee90";
+        return <Bell size={20} color="#6b7280" />;
     }
   };
 
-  const getIconColor = () => {
+  const getActivityColor = (type: Activity['type']) => {
     switch (type) {
-      case "success":
-        return "#32cd32";//00FF00
-      case "newDonorMatched":
-        return "#023E8a";
-      case "scheduled":
-        return "#023E8a";
+      case 'request_fulfilled':
+      case 'donation_completed':
+        return '#059669'; // Green for success
+      case 'donor_matched':
+      case 'donation_scheduled':
+        return '#d97706'; // Orange for matches
+      case 'request_created':
+        return '#2962ff'; // Blue for requests
+      case 'message_received':
+        return '#2563eb'; // Blue for messages
       default:
-        return "#32cd32";
+        return '#6b7280'; // Gray for others
     }
   };
-  const getIcon = () => {
-    switch (type) {
-      case "success":
-        return <CircleCheck color={getIconColor()} style={styles.icon} />;
-      case "newDonorMatched":
-        return <UserPlus2 color={getIconColor()} style={styles.icon}  />;
-      case "scheduled":
-        return <Timer color={getIconColor()} style={styles.icon}  />;
-      default:
-        return <CircleCheck color={getIconColor()} style={styles.icon}  />;
-    }
-  };
+
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
       style={[
         styles.container,
-        {
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "flex-start",
-          alignItems: "center",
-          gap: 15,
-        },
+        !activity.read && styles.unreadContainer,
+        onPress && styles.pressable
       ]}
-      onPress={onPress}
+      onPress={() => onPress?.(activity)}
+      activeOpacity={onPress ? 0.7 : 1}
     >
-      <View
-        style={[styles.iconBadge, { backgroundColor: getBackgroundColor() }]}
-      >
-        {getIcon()}
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{message}</Text>
-        <Text style={{ color: "gray" }}>{createdAt}</Text>
+      <View style={styles.content}>
+        <View style={styles.iconContainer}>
+          {getActivityIcon(activity.type)}
+        </View>
+        
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{activity.title}</Text>
+          <Text style={styles.message}>{activity.message}</Text>
+          <Text style={styles.timestamp}>
+            {formatRelativeTime(activity.timestamp)}
+          </Text>
+        </View>
+
+        {!activity.read && (
+          <View style={[styles.unreadDot, { backgroundColor: getActivityColor(activity.type) }]} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -84,26 +92,59 @@ const RecentActivityCard: React.FC<RecentActivityCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    height: 80,
-    borderRadius: 16,
-    backgroundColor: "#fff",
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  unreadContainer: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#2962ff',
+  },
+  pressable: {
+
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  textContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 16,
-    fontWeight: 600,
-    color: "#000",
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
   },
-  iconBadge: {
-    width: 45,
-    height: 45,
-    borderRadius: "100%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
+  message: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 18,
+    marginBottom: 4,
   },
-  icon: {},
+  timestamp: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginLeft: 8,
+    marginTop: 4,
+  },
 });
 
 export default RecentActivityCard;

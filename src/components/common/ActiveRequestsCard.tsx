@@ -1,6 +1,7 @@
 // ActiveRequestsCard.tsx
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 
 interface ActiveRequestsCardProps {
   urgency: "critical" | "high" | "medium" | "low";
@@ -39,6 +40,8 @@ const ActiveRequestsCard: React.FC<ActiveRequestsCardProps> = ({
     return labels[urgency];
   };
 
+  const relativeTime = useRelativeTime(createdAt, 30000);
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -56,7 +59,7 @@ const ActiveRequestsCard: React.FC<ActiveRequestsCardProps> = ({
             {getUrgencyLabel()}
           </Text>
         </View>
-        <Text style={styles.dateText}>{createdAt}</Text>
+        <Text style={styles.dateText}>{relativeTime}</Text>
       </View>
 
       <View style={styles.divider} />

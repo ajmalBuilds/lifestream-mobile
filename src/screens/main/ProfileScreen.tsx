@@ -69,7 +69,8 @@ interface Setting {
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout } = useAuthStore();
-  const { currentLocation, isTracking, isLoading, updateLocation } = useLocationStore();
+  const { currentLocation, isTracking, isLoading, updateLocation } =
+    useLocationStore();
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
 
@@ -98,14 +99,17 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const enableLocationTracking = async () => {
     try {
       const hasPermission = await locationService.requestPermissions();
-      
+
       if (!hasPermission) {
         Alert.alert(
-          'Location Permission Required',
-          'LifeStream needs location access to help connect blood donors with recipients in emergencies. Please enable location permissions in your device settings.',
+          "Location Permission Required",
+          "LifeStream needs location access to help connect blood donors with recipients in emergencies. Please enable location permissions in your device settings.",
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => locationService.openSettings() },
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => locationService.openSettings(),
+            },
           ]
         );
         setIsLocationEnabled(false);
@@ -119,7 +123,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           location.latitude,
           location.longitude
         );
-        
+
         await updateLocation({
           latitude: location.latitude,
           longitude: location.longitude,
@@ -129,18 +133,27 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
       // Start continuous tracking
       await locationService.startWatchingLocation();
-      
-      Alert.alert('Success', 'Location tracking enabled. You will now appear on the emergency map.');
+
+      Alert.alert(
+        "Success",
+        "Location tracking enabled. You will now appear on the emergency map."
+      );
     } catch (error) {
-      console.error('Error enabling location tracking:', error);
-      Alert.alert('Error', 'Failed to enable location tracking. Please try again.');
+      console.error("Error enabling location tracking:", error);
+      Alert.alert(
+        "Error",
+        "Failed to enable location tracking. Please try again."
+      );
       setIsLocationEnabled(false);
     }
   };
 
   const disableLocationTracking = () => {
     locationService.stopWatchingLocation();
-    Alert.alert('Location Tracking Disabled', 'You will no longer appear on the emergency map.');
+    Alert.alert(
+      "Location Tracking Disabled",
+      "You will no longer appear on the emergency map."
+    );
   };
 
   const updateCurrentLocation = async () => {
@@ -152,19 +165,19 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           location.latitude,
           location.longitude
         );
-        
+
         await updateLocation({
           latitude: location.latitude,
           longitude: location.longitude,
           address,
         });
-        
-        Alert.alert('Success', 'Location updated successfully!');
+
+        Alert.alert("Success", "Location updated successfully!");
       } else {
-        throw new Error('Could not get current location');
+        throw new Error("Could not get current location");
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update location. Please try again.');
+      Alert.alert("Error", "Failed to update location. Please try again.");
     } finally {
       setIsUpdatingLocation(false);
     }
@@ -173,9 +186,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { 
-        text: "Logout", 
-        style: "destructive", 
+      {
+        text: "Logout",
+        style: "destructive",
         onPress: () => {
           // Stop location tracking
           locationService.stopWatchingLocation();
@@ -183,20 +196,20 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           socketService.disconnect();
           // Logout
           logout();
-        }
+        },
       },
     ]);
   };
 
   const formatLocation = (location: typeof currentLocation) => {
-    if (!location) return 'Not available';
-    
+    if (!location) return "Not available";
+
     if (location.address) {
-      return location.address.length > 30 
-        ? location.address.substring(0, 30) + '...'
+      return location.address.length > 30
+        ? location.address.substring(0, 30) + "..."
         : location.address;
     }
-    
+
     return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
   };
 
@@ -257,7 +270,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       color: "#000000",
       icon: <Lock color="#6BABFF" />,
       onPress: () => {
-        if (navigation.getState().routes.find(r => r.name === 'ChangePassword')) {
+        if (
+          navigation.getState().routes.find((r) => r.name === "ChangePassword")
+        ) {
           navigation.navigate("ChangePassword");
         } else {
           Alert.alert("Coming Soon", "This feature is under development");
@@ -269,7 +284,11 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       color: "#000000",
       icon: <Bell color="#6BABFF" />,
       onPress: () => {
-        if (navigation.getState().routes.find(r => r.name === 'NotificationSettings')) {
+        if (
+          navigation
+            .getState()
+            .routes.find((r) => r.name === "NotificationSettings")
+        ) {
           navigation.navigate("NotificationSettings");
         } else {
           Alert.alert("Coming Soon", "This feature is under development");
@@ -289,7 +308,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleViewAllHistory = () => {
-    if (navigation.getState().routes.find(r => r.name === 'DonationHistory')) {
+    if (
+      navigation.getState().routes.find((r) => r.name === "DonationHistory")
+    ) {
       navigation.navigate("DonationHistory");
     } else {
       Alert.alert("Donation History", "View all your past donations");
@@ -297,7 +318,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleEditProfile = () => {
-    if (navigation.getState().routes.find(r => r.name === 'EditProfile')) {
+    if (navigation.getState().routes.find((r) => r.name === "EditProfile")) {
       navigation.navigate("EditProfile");
     } else {
       Alert.alert("Coming Soon", "Profile editing is under development");
@@ -310,7 +331,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.userProfilePicCard}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.editButton}
               onPress={handleEditProfile}
             >
@@ -319,7 +340,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           <Text style={styles.name}>{user?.name || "User"}</Text>
           <Text style={styles.userType}>
-            {user?.userType === 'donor' ? 'Blood Donor' : 'Recipient'}
+            {user?.userType === "donor" ? "Blood Donor" : "Recipient"}
           </Text>
         </View>
 
@@ -329,31 +350,33 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             <MapPin size={20} color="#D30000" />
             <Text style={styles.cardTitle}>Location Services</Text>
           </View>
-          
+
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
               <Text style={styles.toggleLabel}>Enable Location Tracking</Text>
               <Text style={styles.toggleDescription}>
-                {user?.userType === 'donor' 
-                  ? 'Allow recipients to find you during emergencies'
-                  : 'Help donors locate you when you need blood'
-                }
+                {user?.userType === "donor"
+                  ? "Allow recipients to find you during emergencies"
+                  : "Help donors locate you when you need blood"}
               </Text>
             </View>
             <Switch
               value={isLocationEnabled}
               onValueChange={handleLocationToggle}
-              trackColor={{ false: '#e5e7eb', true: '#D30000' }}
-              thumbColor={isLocationEnabled ? '#ffffff' : '#f3f4f6'}
+              trackColor={{ false: "#e5e7eb", true: "#D30000" }}
+              thumbColor={isLocationEnabled ? "#ffffff" : "#f3f4f6"}
             />
           </View>
 
           {currentLocation && (
             <View style={styles.locationInfo}>
               <Text style={styles.locationLabel}>Current Location:</Text>
-              <Text style={styles.locationValue}>{formatLocation(currentLocation)}</Text>
+              <Text style={styles.locationValue}>
+                {formatLocation(currentLocation)}
+              </Text>
               <Text style={styles.locationTimestamp}>
-                Last updated: {new Date(currentLocation.timestamp).toLocaleTimeString()}
+                Last updated:{" "}
+                {new Date(currentLocation.timestamp).toLocaleTimeString()}
               </Text>
             </View>
           )}
@@ -368,7 +391,9 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             ) : (
               <>
                 <Navigation size={16} color="#D30000" />
-                <Text style={styles.outlineButtonText}>Update Location Now</Text>
+                <Text style={styles.outlineButtonText}>
+                  Update Location Now
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -377,10 +402,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.warningBox}>
               <AlertTriangle size={16} color="#d97706" />
               <Text style={styles.warningText}>
-                Location tracking is disabled. {user?.userType === 'donor' 
-                  ? 'You will not appear to recipients in need.'
-                  : 'Donors cannot locate you during emergencies.'
-                }
+                Location tracking is disabled.{" "}
+                {user?.userType === "donor"
+                  ? "You will not appear to recipients in need."
+                  : "Donors cannot locate you during emergencies."}
               </Text>
             </View>
           )}
@@ -403,32 +428,19 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                 <View style={styles.iconCircle}>{detail.icon}</View>
                 <Text style={styles.label}>{detail.label}</Text>
               </View>
-              <Text style={[
-                styles.detail, 
-                detail.label === "Location Status" && {
-                  color: isLocationEnabled ? "#059669" : "#6b7280",
-                  fontWeight: "600"
-                }
-              ]}>
+              <Text
+                style={[
+                  styles.detail,
+                  detail.label === "Location Status" && {
+                    color: isLocationEnabled ? "#059669" : "#6b7280",
+                    fontWeight: "600",
+                  },
+                ]}
+              >
                 {detail.value}
               </Text>
             </View>
           ))}
-        </View>
-
-        {/* Privacy & Security Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Shield size={20} color="#059669" />
-            <Text style={styles.cardTitle}>Privacy & Security</Text>
-          </View>
-          
-          <Text style={styles.privacyText}>
-            • Your exact location is only shared when you enable tracking{'\n'}
-            • Location data is encrypted and securely stored{'\n'}
-            • You can disable tracking at any time{'\n'}
-            • Only verified users can see your approximate location
-          </Text>
         </View>
 
         {/* Donation History */}
@@ -476,6 +488,21 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Privacy & Security Card */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Shield size={20} color="#059669" />
+            <Text style={styles.cardTitle}>Privacy & Security</Text>
+          </View>
+
+          <Text style={styles.privacyText}>
+            • Your location is shared when you enable tracking{"\n"}•
+            Location data is encrypted and securely stored{"\n"}• You can
+            disable tracking at any time{"\n"}• Only verified users can see your
+            location
+          </Text>
+        </View>
+
         {/* Account Settings */}
         <View style={[styles.card, styles.settingsCard]}>
           <Text style={styles.title}>Account Settings</Text>
@@ -520,7 +547,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#eee",
+    backgroundColor: "#f8fafc",
   },
   contentContainer: {
     flex: 1,
@@ -539,6 +566,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   editButton: {
     width: 40,
@@ -568,6 +600,11 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     borderRadius: 10,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   cardHeader: {
     flexDirection: "row",
@@ -615,7 +652,7 @@ const styles = StyleSheet.create({
   listItemLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 15,
+    gap: 10,
   },
   donationItem: {
     maxWidth: "45%",
@@ -631,12 +668,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: "#000",
-    fontWeight: "700",
+    fontWeight: "500",
   },
   detail: {
     fontSize: 14,
     color: "#000",
-    marginBottom: 5,
     fontWeight: "400",
   },
   viewAllButton: {
@@ -655,9 +691,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   privacyText: {
-    textAlign: "center",
+    textAlign: "left",
     fontSize: 12,
-    fontWeight: "600",
+    lineHeight: 20,
+    fontWeight: "400",
     color: "gray",
     marginBottom: 5,
   },

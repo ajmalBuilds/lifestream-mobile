@@ -1,39 +1,52 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, TouchableOpacity } from 'react-native';
-import DashboardScreen from '@/screens/main/DashboardScreen';
-import RequestsScreen from '@/screens/main/RequestsScreen';
-import ProfileScreen from '@/screens/main/ProfileScreen';
-import { House, MapPin, User, Bell, Menu } from 'lucide-react-native';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { View, Text, TouchableOpacity } from "react-native";
+import DashboardScreen from "@/screens/main/DashboardScreen";
+import RequestsScreen from "@/screens/main/RequestsScreen";
+import ProfileScreen from "@/screens/main/ProfileScreen";
+import MapScreen from "@/screens/main/MapScreen";
+import { House, MapPin, User, Bell, Menu } from "lucide-react-native";
 
 export type MainTabParamList = {
   Dashboard: undefined;
   Requests: undefined;
+  Map: undefined;
   Profile: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const CustomHeader = ({ title, onNotificationPress, onMenuPress }: { 
-  title: string; 
+const CustomHeader = ({
+  title,
+  onNotificationPress,
+  onMenuPress,
+}: {
+  title: string;
   onNotificationPress?: () => void;
   onMenuPress?: () => void;
 }) => (
-  <View style={{
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 40,
-    height: 100,
-    backgroundColor: '#ffffff',
-  }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <Text style={{ fontSize: 26, fontWeight: 'bold', color: 'black' }}>{title}</Text>
+  <View
+    style={{
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 16,
+      paddingTop: 40,
+      height: 100,
+      backgroundColor: "#ffffff",
+    }}
+  >
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <Text style={{ fontSize: 26, fontWeight: "bold", color: "black" }}>
+        {title}
+      </Text>
     </View>
-    
-    <View style={{ flexDirection: 'row' }}>
-      <TouchableOpacity onPress={onNotificationPress} style={{ padding: 12, marginRight: 0 }}>
+
+    <View style={{ flexDirection: "row" }}>
+      <TouchableOpacity
+        onPress={onNotificationPress}
+        style={{ padding: 12, marginRight: 0 }}
+      >
         <Bell color="black" size={26} />
       </TouchableOpacity>
       <TouchableOpacity onPress={onMenuPress} style={{ padding: 12 }}>
@@ -48,48 +61,57 @@ const MainNavigator: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         header: ({ route, options }) => (
-          <CustomHeader 
+          <CustomHeader
             title={options.title || route.name}
-            onNotificationPress={() => console.log('Notifications pressed')}
-            onMenuPress={() => console.log('Menu pressed')}
+            onNotificationPress={() => console.log("Notifications pressed")}
+            onMenuPress={() => console.log("Menu pressed")}
           />
         ),
         tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#e5e7eb',
+          backgroundColor: "#ffffff",
+          borderTopColor: "#e5e7eb",
+          height: 60,
+          paddingTop: 5,
         },
-        tabBarActiveTintColor: '#2196F3',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: "#2196F3",
+        tabBarInactiveTintColor: "#6b7280",
       }}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={DashboardScreen}
         options={{
-          title: 'LifeStream',
-          tabBarIcon: ({ color, size }) => (
-            <House color={color} size={size} />
-          ),
+          title: "LifeStream",
+          
+          tabBarBadgeStyle: { backgroundColor: '#ff3b30', color: 'white' },
+           tabBarShowLabel: false,
+          tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
         }}
       />
-      <Tab.Screen 
-        name="Requests" 
+      {/* <Tab.Screen
+        name="Requests"
         component={RequestsScreen}
         options={{
-          title: 'Requests',
-          tabBarIcon: ({ color, size }) => (
-            <MapPin color={color} size={size} />
-          ),
+          title: "Requests",
+           tabBarShowLabel: false,
+          tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
+        }}
+      /> */}
+      <Tab.Screen
+        name="Map"
+        component={MapScreen}
+        options={{
+          tabBarShowLabel: false,
+          tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
         }}
       />
-      <Tab.Screen 
-        name="Profile" 
+      <Tab.Screen
+        name="Profile"
         component={ProfileScreen}
         options={{
-          title: 'My Profile',
-          tabBarIcon: ({ color, size }) => (
-            <User color={color} size={size} />
-          ),
+          title: "My Profile",
+          tabBarShowLabel: false,
+          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
     </Tab.Navigator>
