@@ -5,7 +5,8 @@ import DashboardScreen from "@/screens/main/DashboardScreen";
 import RequestsScreen from "@/screens/main/RequestsScreen";
 import ProfileScreen from "@/screens/main/ProfileScreen";
 import MapScreen from "@/screens/main/MapScreen";
-import { House, MapPin, User, Bell, Menu } from "lucide-react-native";
+import { useAuthStore } from "@/store/authStore";
+import { House, MapPin, User, Bell, Menu, Droplet } from "lucide-react-native";
 
 export type MainTabParamList = {
   Dashboard: undefined;
@@ -57,6 +58,7 @@ const CustomHeader = ({
 );
 
 const MainNavigator: React.FC = () => {
+  const { user } = useAuthStore();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -82,21 +84,12 @@ const MainNavigator: React.FC = () => {
         component={DashboardScreen}
         options={{
           title: "LifeStream",
-          
-          tabBarBadgeStyle: { backgroundColor: '#ff3b30', color: 'white' },
-           tabBarShowLabel: false,
+
+          tabBarBadgeStyle: { backgroundColor: "#ff3b30", color: "white" },
+          tabBarShowLabel: false,
           tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
         }}
       />
-      {/* <Tab.Screen
-        name="Requests"
-        component={RequestsScreen}
-        options={{
-          title: "Requests",
-           tabBarShowLabel: false,
-          tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
-        }}
-      /> */}
       <Tab.Screen
         name="Map"
         component={MapScreen}
@@ -105,6 +98,21 @@ const MainNavigator: React.FC = () => {
           tabBarIcon: ({ color, size }) => <MapPin color={color} size={size} />,
         }}
       />
+      {user?.userType !== "recipient" ? (
+        <Tab.Screen
+          name="Requests"
+          component={RequestsScreen}
+          options={{
+            title: "Requests",
+            tabBarShowLabel: false,
+            tabBarIcon: ({ color, size }) => (
+              <Droplet color={color} size={size} />
+            ),
+          }}
+        />
+      ) : (
+        <></>
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}

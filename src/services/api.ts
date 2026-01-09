@@ -86,6 +86,18 @@ export const requestAPI = {
 
   deleteRequest: (id: string) =>
     api.delete(`/requests/${id}`),
+
+  existingResponseOnArequest : (requestId: string) =>
+    api.get(`/requests/${requestId}/existing-response`),
+
+  respondToRequest: (responseData: { message: string; available: boolean }, requestId: string) =>
+    api.post(`/requests/${requestId}/respond/`, responseData),
+
+  getRequestResponses: (requestId: string) =>
+    api.get(`/requests/${requestId}/responses`),
+
+  userRequests: () => 
+    api.get('/requests/user/history'),
 };
 
 export const mapAPI = {
@@ -94,6 +106,52 @@ export const mapAPI = {
 
   getRequestDetails: (id: number) =>
     api.get(`/requests/${id}`),
+};
+
+// User API
+export const userAPI = {
+  getNearByDonors: (latitude: number, longitude: number, radius: number = 10, bloodType?: string) =>
+    api.get(`/users/donors/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}${bloodType ? `&bloodType=${bloodType}` : ''}`),
+  
+  getDonors: () =>
+    api.get('/users/donors'),
+
+  getDonorById: (donorId: string) =>
+    api.get(`/users/donors/${donorId}`),
+};
+
+// Chat API
+export const chatAPI = {
+  // Donor Response
+  respondToRequest: (responseData: { message: string; available: boolean }, requestId: string) =>
+    api.post(`/chat/respond/${requestId}`, responseData),
+  // Get conversation by request ID
+  getConversation: (requestId: string) =>
+    api.get(`/chat/conversation/request/${requestId}`),
+
+  // Send message
+  sendMessage: (messageData: { conversationId: string; text: string; requestId: string }) =>
+    api.post('/chat/messages', messageData),
+
+  // Mark messages as read
+  markMessagesAsRead: (messageIds: string[]) =>
+    api.post('/chat/messages/read', { messageIds }),
+
+  // Get user conversations
+  getUserConversations: () =>
+    api.get('/chat/conversations'),
+
+  // Get unread message count
+  getUnreadCount: () =>
+    api.get('/chat/unread-count'),
+
+  // Clear conversation (mark all as read)
+  clearConversation: (requestId: string) =>
+    api.post(`/chat/conversation/${requestId}/clear`),
+
+  // Search messages in conversation
+  searchMessages: (requestId: string, query: string) =>
+    api.get(`/chat/conversation/${requestId}/search?query=${encodeURIComponent(query)}`),
 };
 
 export interface RegisterData {

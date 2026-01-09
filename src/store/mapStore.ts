@@ -36,14 +36,15 @@ interface MapState {
   setLoading: (loading: boolean) => void;
   updateFilters: (filters: Partial<MapState['filters']>) => void;
   clearFilters: () => void;
+  getFilteredRequests: () => MapRequest[];
 }
 
-export const useMapStore = create<MapState>((set) => ({
+export const useMapStore = create<MapState>((set, get) => ({
   requests: [],
   selectedRequest: null,
   mapRegion: {
-    latitude: 17.4432,
-    longitude: 78.3818,
+    latitude: 17.3841,
+    longitude: 78.4564,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   },
@@ -63,4 +64,16 @@ export const useMapStore = create<MapState>((set) => ({
   clearFilters: () => set({ 
     filters: { bloodType: null, urgency: null, maxDistance: 50 } 
   }),
+  getFilteredRequests: () => {
+    const { requests, filters } = get();
+    return requests.filter(request => {
+      if (filters.bloodType && request.blood_type !== filters.bloodType) {
+        return false;
+      }
+      if (filters.urgency && request.urgency !== filters.urgency) {
+        return false;
+      }
+      return true;
+    });
+  },
 }));

@@ -57,16 +57,16 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
-          <Text style={styles.title}>🩸 LifeStream</Text>
+          <Text style={styles.title}>LifeStream</Text>
           <Text style={styles.subtitle}>Sign in to save lives</Text>
 
           <View style={styles.form}>
+            <KeyboardAvoidingView
+              style={styles.container}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
             <TextInput
               style={styles.input}
               placeholder="Email Address"
@@ -85,7 +85,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               placeholderTextColor="#9ca3af"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={true}
               autoComplete="password"
               editable={!isLoading}
             />
@@ -94,7 +94,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               style={[styles.button, isLoading && styles.buttonDisabled]}
               onPress={handleLogin}
               disabled={isLoading}
-            >
+              >
               {isLoading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
@@ -102,6 +102,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </TouchableOpacity>
 
+              </KeyboardAvoidingView>
             <TouchableOpacity
               style={[styles.button, styles.secondaryButton]}
               onPress={() => navigation.navigate('Register')}
@@ -116,18 +117,17 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F8F6F6',
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   content: {
     padding: 24,
@@ -138,6 +138,7 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     textAlign: 'center',
     marginBottom: 8,
+    marginTop: 90
   },
   subtitle: {
     fontSize: 16,

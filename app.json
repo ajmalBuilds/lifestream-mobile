@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,42 +19,47 @@
       "bundleIdentifier": "com.lifestream.app",
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow LifeStream to use your location for emergency blood requests.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow LifeStream to use your location for emergency blood requests even when the app is in the background."
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.lifestream.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
         "VIBRATE"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon/favicon-32x32.png"
     },
     "plugins": [
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow LifeStream to use your location for emergency blood requests."
+          "locationAlwaysAndWhenInUsePermission": "Allow LifeStream to use your location for emergency blood requests.",
+          "isAndroidBackgroundLocationEnabled": true
         }
       ],
       [
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#DC2626",
-          "sounds": ["./assets/emergency-alert.wav"]
+          "color": "#DC2626"
         }
       ]
     ],
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "76fd6922-b6e9-4c17-b5a0-6b24c7681d51"
       }
     }
   }

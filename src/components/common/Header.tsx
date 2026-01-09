@@ -21,13 +21,13 @@ export default function Header({ title, backgroundColor }: {
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingTop: 60,
-      height: 100,
+      paddingTop: 40,
+      height: 90,
       backgroundColor: backgroundColor || '#ffffff',
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <TouchableOpacity onPress={handleBackPress} style={{ padding: 8 }}>
-          <ArrowLeft color="black" size={24} />
+          <ArrowLeft color="black" size={28} />
         </TouchableOpacity>
         <Text style={{ fontSize: 22, fontWeight: '500', color: 'black' }}>{title}</Text>
       </View>

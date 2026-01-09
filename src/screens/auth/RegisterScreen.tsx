@@ -242,7 +242,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F8F6F6',
   },
   scrollContainer: {
     flexGrow: 1,

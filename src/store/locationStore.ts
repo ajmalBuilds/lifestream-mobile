@@ -11,15 +11,22 @@ export interface Location {
   timestamp: number;
 }
 
-interface LocationState {
+export interface PermissionStatus {
+  foreground: boolean;
+  background: boolean;
+}
+
+export interface LocationState {
   currentLocation: Location | null;
   isTracking: boolean;
   isLoading: boolean;
   error: string | null;
+  permissionStatus: PermissionStatus;
   updateLocation: (location: { latitude: number; longitude: number; address?: string }) => Promise<void>;
   startTracking: () => void;
   stopTracking: () => void;
   clearError: () => void;
+  setPermissionStatus: (status: PermissionStatus) => void;
 }
 
 export const useLocationStore = create<LocationState>()(
@@ -29,6 +36,10 @@ export const useLocationStore = create<LocationState>()(
       isTracking: false,
       isLoading: false,
       error: null,
+      permissionStatus: {
+        foreground: false,
+        background: false,
+      },
 
       updateLocation: async (locationData: { latitude: number; longitude: number; address?: string }) => {
         const { token } = useAuthStore.getState();
@@ -46,27 +57,34 @@ export const useLocationStore = create<LocationState>()(
             timestamp: Date.now(),
           };
 
+          // Update local state first for immediate UI feedback
           set({ currentLocation: location });
 
+          // Then sync with backend
           await locationAPI.updateLocation(location);
+          
+          // Emit to socket if available
           const socket = (global as any).socket;
-          if (socket) {
+          if (socket && socket.connected) {
             socket.emit('update-location', location);
           }
 
           set({ isLoading: false });
         } catch (error: any) {
           const errorMessage = error.response?.data?.message || 'Failed to update location';
+          console.error('Location update error:', errorMessage);
+          
           set({ 
             isLoading: false, 
             error: errorMessage 
           });
+          
           throw new Error(errorMessage);
         }
       },
 
       startTracking: () => {
-        set({ isTracking: true });
+        set({ isTracking: true, error: null });
       },
 
       stopTracking: () => {
@@ -74,6 +92,10 @@ export const useLocationStore = create<LocationState>()(
       },
 
       clearError: () => set({ error: null }),
+
+      setPermissionStatus: (status: PermissionStatus) => {
+        set({ permissionStatus: status });
+      },
     }),
     {
       name: 'location-storage',
@@ -81,6 +103,7 @@ export const useLocationStore = create<LocationState>()(
       partialize: (state) => ({
         currentLocation: state.currentLocation,
         isTracking: state.isTracking,
+        permissionStatus: state.permissionStatus,
       }),
     }
   )

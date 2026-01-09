@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { useAuthStore } from "@/store/authStore";
 import { useLocationStore } from "@/store/locationStore";
 import { locationService } from "@/services/locationService";
-import { socketService } from "@/services/socketService";
+import { socketService } from "@/services/sockets/socketService";
 import {
   Bell,
   ChevronRight,
@@ -69,51 +69,113 @@ interface Setting {
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout } = useAuthStore();
-  const { currentLocation, isTracking, isLoading, updateLocation } =
+  const { currentLocation, isTracking, isLoading, updateLocation, permissionStatus } =
     useLocationStore();
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isTogglingLocation, setIsTogglingLocation] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection when component mounts
-    socketService.connect();
-
-    // Check if location tracking was previously enabled
-    setIsLocationEnabled(isTracking);
+    initializeScreen();
 
     return () => {
       // Cleanup if needed
     };
   }, []);
 
-  const handleLocationToggle = async (enabled: boolean) => {
-    setIsLocationEnabled(enabled);
+  // Sync local switch state with store tracking state
+  useEffect(() => {
+    setIsLocationEnabled(isTracking);
+  }, [isTracking]);
 
-    if (enabled) {
-      await enableLocationTracking();
-    } else {
-      disableLocationTracking();
+  const initializeScreen = async () => {
+    try {
+      // Initialize socket connection
+      socketService.connect();
+
+      // Check current permission status
+      const permissions = await locationService.checkPermissions();
+      useLocationStore.getState().setPermissionStatus(permissions);
+
+      // Set UI state based on permissions and tracking status
+      const shouldBeEnabled = isTracking && permissions.foreground;
+      setIsLocationEnabled(shouldBeEnabled);
+
+      // If tracking was enabled but permissions are revoked, stop tracking
+      if (isTracking && !permissions.foreground) {
+        locationService.stopWatchingLocation();
+        Alert.alert(
+          "Location Permission Required",
+          "Location permissions have been revoked. Please re-enable location tracking."
+        );
+      }
+
+      // If tracking is enabled and permissions exist, restart watching
+      if (isTracking && permissions.foreground) {
+        const started = await locationService.startWatchingLocation();
+        if (!started) {
+          // Failed to restart, update state
+          setIsLocationEnabled(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing screen:", error);
+    } finally {
+      setIsInitializing(false);
     }
   };
 
-  const enableLocationTracking = async () => {
-    try {
-      const hasPermission = await locationService.requestPermissions();
+  const handleLocationToggle = async (enabled: boolean) => {
+    // Prevent multiple simultaneous toggle operations
+    if (isTogglingLocation) {
+      return;
+    }
 
-      if (!hasPermission) {
-        Alert.alert(
-          "Location Permission Required",
-          "LifeStream needs location access to help connect blood donors with recipients in emergencies. Please enable location permissions in your device settings.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => locationService.openSettings(),
-            },
-          ]
-        );
-        setIsLocationEnabled(false);
-        return;
+    setIsTogglingLocation(true);
+
+    try {
+      if (enabled) {
+        const success = await enableLocationTracking();
+        // State is updated by enableLocationTracking via store
+        if (!success) {
+          // Ensure switch reflects failure
+          setIsLocationEnabled(false);
+        }
+      } else {
+        await disableLocationTracking();
+        // State is updated by disableLocationTracking via store
+      }
+    } finally {
+      setIsTogglingLocation(false);
+    }
+  };
+
+  const enableLocationTracking = async (): Promise<boolean> => {
+    try {
+      // Check existing permissions first
+      let permissions = await locationService.checkPermissions();
+
+      // Request permissions if not granted
+      if (!permissions.foreground) {
+        permissions = await locationService.requestPermissions();
+        
+        if (!permissions.foreground) {
+          Alert.alert(
+            "Location Permission Required",
+            "LifeStream needs location access to help connect blood donors with recipients in emergencies. Please enable location permissions in your device settings.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Open Settings",
+                onPress: async () => {
+                  await locationService.openSettings();
+                },
+              },
+            ]
+          );
+          return false;
+        }
       }
 
       // Get initial location
@@ -132,31 +194,69 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       }
 
       // Start continuous tracking
-      await locationService.startWatchingLocation();
+      const trackingStarted = await locationService.startWatchingLocation();
 
-      Alert.alert(
-        "Success",
-        "Location tracking enabled. You will now appear on the emergency map."
-      );
+      if (trackingStarted) {
+        Alert.alert(
+          "Success",
+          "Location tracking enabled. You will now appear on the emergency map."
+        );
+        return true;
+      } else {
+        throw new Error("Failed to start location tracking");
+      }
     } catch (error) {
       console.error("Error enabling location tracking:", error);
       Alert.alert(
         "Error",
         "Failed to enable location tracking. Please try again."
       );
-      setIsLocationEnabled(false);
+      return false;
     }
   };
 
-  const disableLocationTracking = () => {
-    locationService.stopWatchingLocation();
-    Alert.alert(
-      "Location Tracking Disabled",
-      "You will no longer appear on the emergency map."
-    );
+  const disableLocationTracking = async () => {
+    try {
+      locationService.stopWatchingLocation();
+      Alert.alert(
+        "Location Tracking Disabled",
+        "You will no longer appear on the emergency map."
+      );
+    } catch (error) {
+      console.error("Error disabling location tracking:", error);
+    }
   };
 
   const updateCurrentLocation = async () => {
+    if (!permissionStatus.foreground) {
+      Alert.alert(
+        "Permission Required",
+        "Please enable location tracking first.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              // Optionally suggest enabling tracking
+              if (!isLocationEnabled) {
+                Alert.alert(
+                  "Enable Location Tracking?",
+                  "Would you like to enable location tracking now?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Enable",
+                      onPress: () => handleLocationToggle(true),
+                    },
+                  ]
+                );
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
     setIsUpdatingLocation(true);
     try {
       const location = await locationService.getCurrentLocation();
@@ -177,6 +277,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         throw new Error("Could not get current location");
       }
     } catch (error) {
+      console.error("Error updating location:", error);
       Alert.alert("Error", "Failed to update location. Please try again.");
     } finally {
       setIsUpdatingLocation(false);
@@ -213,6 +314,26 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
   };
 
+  const getLocationStatusText = () => {
+    if (isLocationEnabled && permissionStatus.foreground) {
+      return "Active";
+    } else if (permissionStatus.foreground && !isLocationEnabled) {
+      return "Permitted (Inactive)";
+    } else {
+      return "Disabled";
+    }
+  };
+
+  const getLocationStatusColor = () => {
+    if (isLocationEnabled && permissionStatus.foreground) {
+      return "#059669"; // Green
+    } else if (permissionStatus.foreground && !isLocationEnabled) {
+      return "#d97706"; // Orange
+    } else {
+      return "#6b7280"; // Gray
+    }
+  };
+
   const userPersonalDetails: PersonalDetail[] = [
     {
       label: "Blood Type",
@@ -231,8 +352,8 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       label: "Location Status",
-      value: isLocationEnabled ? "Enabled" : "Disabled",
-      icon: <MapPin color={isLocationEnabled ? "#D30000" : "#9CA3AF"} />,
+      value: getLocationStatusText(),
+      icon: <MapPin color={getLocationStatusColor()} />,
     },
   ];
 
@@ -325,6 +446,14 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  if (isInitializing) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#D30000" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.contentContainer}>
@@ -365,8 +494,23 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               onValueChange={handleLocationToggle}
               trackColor={{ false: "#e5e7eb", true: "#D30000" }}
               thumbColor={isLocationEnabled ? "#ffffff" : "#f3f4f6"}
+              disabled={isLoading || isTogglingLocation}
             />
           </View>
+
+          {/* Permission Status Indicator */}
+          {permissionStatus.foreground && (
+            <View style={styles.permissionInfo}>
+              <Text style={styles.permissionText}>
+                ✓ Foreground permission granted
+              </Text>
+              {permissionStatus.background && (
+                <Text style={styles.permissionText}>
+                  ✓ Background permission granted
+                </Text>
+              )}
+            </View>
+          )}
 
           {currentLocation && (
             <View style={styles.locationInfo}>
@@ -382,7 +526,11 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           )}
 
           <TouchableOpacity
-            style={[styles.button, styles.outlineButton]}
+            style={[
+              styles.button,
+              styles.outlineButton,
+              (!isLocationEnabled || isUpdatingLocation) && styles.buttonDisabled,
+            ]}
             onPress={updateCurrentLocation}
             disabled={isUpdatingLocation || !isLocationEnabled}
           >
@@ -432,7 +580,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                 style={[
                   styles.detail,
                   detail.label === "Location Status" && {
-                    color: isLocationEnabled ? "#059669" : "#6b7280",
+                    color: getLocationStatusColor(),
                     fontWeight: "600",
                   },
                 ]}
@@ -496,7 +644,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <Text style={styles.privacyText}>
-            • Your location is shared when you enable tracking{"\n"}•
+            • Your location is shared only when you enable tracking{"\n"}•
             Location data is encrypted and securely stored{"\n"}• You can
             disable tracking at any time{"\n"}• Only verified users can see your
             location
@@ -547,7 +695,10 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+  },
+  centerContent: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   contentContainer: {
     flex: 1,
@@ -704,7 +855,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#2196F3",
   },
-  // Location-specific styles
   toggleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -726,8 +876,19 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     lineHeight: 16,
   },
+  permissionInfo: {
+    backgroundColor: "#ecfdf5",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  permissionText: {
+    fontSize: 12,
+    color: "#059669",
+    marginBottom: 2,
+  },
   locationInfo: {
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#F8F6F6",
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
@@ -760,6 +921,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D30000",
     gap: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   outlineButtonText: {
     color: "#D30000",

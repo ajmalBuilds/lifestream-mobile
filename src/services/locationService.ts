@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
-import { useLocationStore } from '../store/locationStore';
+import { useLocationStore, PermissionStatus } from '../store/locationStore';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 
@@ -22,20 +22,104 @@ export class LocationService {
     return LocationService.instance;
   }
 
-  // Request location permissions
-  async requestPermissions(): Promise<boolean> {
+  // Check current permission status without requesting
+  async checkPermissions(): Promise<PermissionStatus> {
+    try {
+      const foreground = await Location.getForegroundPermissionsAsync();
+      const background = await Location.getBackgroundPermissionsAsync();
+      
+      return {
+        foreground: foreground.status === 'granted',
+        background: background.status === 'granted',
+      };
+    } catch (error) {
+      console.error('Error checking location permissions:', error);
+      return {
+        foreground: false,
+        background: false,
+      };
+    }
+  }
+
+  // Request foreground permissions only
+  async requestForegroundPermissions(): Promise<boolean> {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      const granted = status === 'granted';
       
-      if (status === 'granted') {
-        const backgroundStatus = await Location.requestBackgroundPermissionsAsync();
-        return backgroundStatus.status === 'granted';
-      }
+      // Update store with permission status
+      useLocationStore.getState().setPermissionStatus({
+        foreground: granted,
+        background: false,
+      });
       
+      return granted;
+    } catch (error) {
+      console.error('Error requesting foreground permissions:', error);
       return false;
+    }
+  }
+
+  // Request background permissions (only call after foreground is granted)
+  async requestBackgroundPermissions(): Promise<boolean> {
+    try {
+      const foregroundStatus = await Location.getForegroundPermissionsAsync();
+      
+      if (foregroundStatus.status !== 'granted') {
+        console.warn('Foreground permission must be granted before requesting background');
+        return false;
+      }
+
+      const { status } = await Location.requestBackgroundPermissionsAsync();
+      const granted = status === 'granted';
+      
+      // Update store with both permissions
+      useLocationStore.getState().setPermissionStatus({
+        foreground: true,
+        background: granted,
+      });
+      
+      return granted;
+    } catch (error) {
+      console.error('Error requesting background permissions:', error);
+      return false;
+    }
+  }
+
+  // Request all necessary permissions with proper flow
+  async requestPermissions(): Promise<PermissionStatus> {
+    try {
+      // First check if we already have permissions
+      const currentPermissions = await this.checkPermissions();
+      
+      if (currentPermissions.foreground && currentPermissions.background) {
+        // Already have all permissions
+        useLocationStore.getState().setPermissionStatus(currentPermissions);
+        return currentPermissions;
+      }
+
+      // Request foreground if not granted
+      if (!currentPermissions.foreground) {
+        const foregroundGranted = await this.requestForegroundPermissions();
+        
+        if (!foregroundGranted) {
+          return { foreground: false, background: false };
+        }
+      }
+
+      // Request background if not granted (optional - only for continuous tracking)
+      if (!currentPermissions.background) {
+        const backgroundGranted = await this.requestBackgroundPermissions();
+        return {
+          foreground: true,
+          background: backgroundGranted,
+        };
+      }
+
+      return await this.checkPermissions();
     } catch (error) {
       console.error('Error requesting location permissions:', error);
-      return false;
+      return { foreground: false, background: false };
     }
   }
 
@@ -48,12 +132,17 @@ export class LocationService {
     }
   }
 
-  // Get current location once
+  // Get current location once (only needs foreground permission)
   async getCurrentLocation(): Promise<LocationCoordinates | null> {
     try {
-      const hasPermission = await this.requestPermissions();
-      if (!hasPermission) {
-        throw new Error('Location permission not granted');
+      // Check if we have at least foreground permission
+      const permissions = await this.checkPermissions();
+      
+      if (!permissions.foreground) {
+        const granted = await this.requestForegroundPermissions();
+        if (!granted) {
+          throw new Error('Location permission not granted');
+        }
       }
 
       const location = await Location.getCurrentPositionAsync({
@@ -73,11 +162,22 @@ export class LocationService {
   }
 
   // Start watching location (for real-time updates)
-  async startWatchingLocation() {
+  async startWatchingLocation(): Promise<boolean> {
     try {
-      const hasPermission = await this.requestPermissions();
-      if (!hasPermission) {
-        throw new Error('Location permission not granted');
+      // Check current permissions
+      const permissions = await this.checkPermissions();
+      
+      // Request permissions if needed
+      if (!permissions.foreground) {
+        const newPermissions = await this.requestPermissions();
+        if (!newPermissions.foreground) {
+          throw new Error('Location permission not granted');
+        }
+      }
+
+      // Stop existing subscription if any
+      if (this.watchSubscription) {
+        this.watchSubscription.remove();
       }
 
       this.watchSubscription = await Location.watchPositionAsync(
@@ -100,8 +200,11 @@ export class LocationService {
       );
 
       useLocationStore.getState().startTracking();
+      return true;
     } catch (error) {
       console.error('Error starting location watch:', error);
+      useLocationStore.getState().stopTracking();
+      return false;
     }
   }
 

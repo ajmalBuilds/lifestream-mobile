@@ -6,7 +6,7 @@ import AppNavigator from "@/navigation/AppNavigator";
 import "./global.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuthStore } from "@/store/authStore";
-import { socketService } from "@/services/socketService";
+import { socketService } from "@/services/sockets/socketService";
 
 export default function App() {
   const { isAuthenticated, token } = useAuthStore();
